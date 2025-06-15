@@ -31,6 +31,7 @@ export const AppProvider = ({ children })=>{
                 toast.error('You are not authorized to access admin dashboard')
             }
         } catch (error) {
+            toast.error('Failed to check admin status')
             console.error(error)
         }
     }
@@ -41,6 +42,7 @@ export const AppProvider = ({ children })=>{
             if(data.success){
                 setShows(data.shows)
             }else{
+                console.error(data.message)
                 toast.error(data.message)
             }
         } catch (error) {

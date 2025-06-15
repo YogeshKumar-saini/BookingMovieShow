@@ -11,6 +11,19 @@ node_modules
 dist
 dist-ssr
 *.local
+# Build output
+dist/
+dist-ssr/   
+# Temporary files
+tmp/
+temp/
+# Coverage directory used by tools like istanbul
+coverage/
+# Dependency directories
+node_modules/   
+# Optional npm cache directory
+.npm/   
+
 
 # Editor directories and files
 .vscode/*
@@ -22,5 +35,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-.env

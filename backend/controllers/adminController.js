@@ -6,6 +6,7 @@ import User from "../models/User.js";
 // API to check if user is admin
 export const isAdmin = async (req, res) =>{
     res.json({success: true, isAdmin: true})
+    console.log("Admin check successful");
 }
 
 // API to get dashboard data
@@ -23,10 +24,13 @@ export const getDashboardData = async (req, res) =>{
             totalUser
         }
 
+        console.log("Dashboard data fetched successfully");
         res.json({success: true, dashboardData})
+
     } catch (error) {
-        console.error(error);
+        console.error(error, "Error in getting dashboard data");
         res.json({success: false, message: error.message})
+
     }
 }
 
