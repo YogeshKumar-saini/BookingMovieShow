@@ -8,6 +8,7 @@ const MOVIES_PER_PAGE = 6;
 const Movies = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOption, setSortOption] = useState('latest'); // latest, oldest, rating
+  const [favorites, setFavorites] = useState([]);
 
   // Sort logic
   const sortedMovies = useMemo(() => {
@@ -33,11 +34,18 @@ const Movies = () => {
   const handlePrev = () => setCurrentPage((p) => Math.max(p - 1, 1));
   const handleNext = () => setCurrentPage((p) => Math.min(p + 1, totalPages));
 
+  const toggleFavorite = (movieId) => {
+    setFavorites((prev) =>
+      prev.includes(movieId) ? prev.filter((id) => id !== movieId) : [...prev, movieId]
+    );
+  };
+
   return (
     <div className="relative mt-32 mb-60 px-6 md:px-16 lg:px-36 xl:px-44 overflow-hidden min-h-[80vh]">
       <BlurCircle top="150px" left="0px" />
       <BlurCircle bottom="50px" right="50px" />
 
+      {/* Header + Sort */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
         <h1 className="text-3xl md:text-4xl font-semibold text-white tracking-wide">Now Showing</h1>
         <select
@@ -51,19 +59,26 @@ const Movies = () => {
         </select>
       </div>
 
+      {/* Movie Grid */}
       {currentMovies.length > 0 ? (
         <>
           <div className="flex flex-wrap gap-6 justify-center md:justify-start">
             {currentMovies.map((movie) => (
-              <MovieCard movie={movie} key={movie._id} />
+              <MovieCard
+                key={movie._id}
+                movie={movie}
+                isFavorite={favorites.includes(movie._id)}
+                onToggleFavorite={() => toggleFavorite(movie._id)}
+              />
             ))}
           </div>
 
+          {/* Pagination */}
           <div className="flex justify-center gap-4 mt-10">
             <button
               onClick={handlePrev}
               disabled={currentPage === 1}
-              className="px-4 py-2 bg-gray-800 text-white rounded disabled:opacity-40"
+              className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition disabled:opacity-30"
             >
               Previous
             </button>
@@ -73,7 +88,7 @@ const Movies = () => {
             <button
               onClick={handleNext}
               disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-gray-800 text-white rounded disabled:opacity-40"
+              className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition disabled:opacity-30"
             >
               Next
             </button>

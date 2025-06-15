@@ -8,6 +8,9 @@ import BlurCircle from "../components/BlurCircle";
 import toast from "react-hot-toast";
 
 const SeatLayout = () => {
+  const navigate = useNavigate();
+  const { id, date } = useParams();
+
   const groupRows = [
     ["A", "B"],
     ["C", "D"],
@@ -15,29 +18,27 @@ const SeatLayout = () => {
     ["G", "H"],
     ["I", "J"],
   ];
-  const { id, date } = useParams();
+
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [selectedTime, setSelectedTime] = useState(null);
   const [show, setShow] = useState(null);
 
-  const navigate = useNavigate();
-
-  const getShow = async () => {
-    const show = dummyShowsData.find((show) => show._id == id);
-    if (show) {
+  useEffect(() => {
+    const movie = dummyShowsData.find((s) => s._id == id);
+    if (movie) {
       setShow({
-        movie: show,
+        movie,
         dateTime: dummyDateTimeData,
       });
     }
-  };
+  }, [id]);
 
   const handleSeatClick = (seatId) => {
     if (!selectedTime) {
       return toast("Please select time first");
     }
-    if (!selectedSeats.includes(seatId) && selectedSeats.length > 4) {
-      return toast("You can only select 5 seats");
+    if (!selectedSeats.includes(seatId) && selectedSeats.length >= 5) {
+      return toast("You can only select up to 5 seats");
     }
     setSelectedSeats((prev) =>
       prev.includes(seatId)
@@ -47,73 +48,85 @@ const SeatLayout = () => {
   };
 
   const renderSeats = (row, count = 9) => (
-    <div key={row} className="flex gap-2 mt-2">
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        {Array.from({ length: count }, (_, i) => {
-          const seatId = `${row}${i + 1}`;
-          return (
-            <button
-              key={seatId}
-              onClick={() => handleSeatClick(seatId)}
-              className={`h-8 w-8 rounded border border-primary/60 cursor-pointer ${
-                selectedSeats.includes(seatId) && "bg-primary text-white"
-              }`}
-            >
-              {seatId}
-            </button>
-          );
-        })}
-      </div>
+    <div key={row} className="flex flex-wrap gap-2">
+      {Array.from({ length: count }, (_, i) => {
+        const seatId = `${row}${i + 1}`;
+        const isSelected = selectedSeats.includes(seatId);
+        return (
+          <button
+            key={seatId}
+            onClick={() => handleSeatClick(seatId)}
+            className={`h-9 w-9 rounded border border-primary text-sm transition font-medium ${
+              isSelected
+                ? "bg-primary text-white"
+                : "hover:bg-primary/20 text-gray-200"
+            }`}
+          >
+            {seatId}
+          </button>
+        );
+      })}
     </div>
   );
 
-  useEffect(() => {
-    getShow();
-  }, []);
-
   return show ? (
-    <div className="flex flex-col md:flex-row px-6 md:px-16 lg:px-40 py-30 md:pt-50">
-      {/* available timings */}
-      <div className="w-60 bg-primary/10 border border-primary/20 rounded-lg py-10 h-max md:sticky md:top-30">
-        <p className="text-lg font-semibold px-6">Available Timings</p>
-        <div className="mt-5 space-y-1">
-          {show.dateTime[date].map((item) => (
+    <div className="flex flex-col md:flex-row px-4 sm:px-8 lg:px-32 py-20 gap-12 relative">
+      {/* Blur Effects */}
+      <BlurCircle top="-100px" left="-100px" />
+      <BlurCircle bottom="0" right="0" />
+
+      {/* Left Sidebar – Timings */}
+      <div className="md:w-60 w-full bg-white/5 border border-white/10 rounded-xl p-6 md:sticky md:top-28 shadow-sm">
+        <p className="text-lg font-semibold text-white mb-4">Available Timings</p>
+        <div className="space-y-2">
+          {show.dateTime[date]?.map((item) => (
             <div
               key={item.time}
               onClick={() => setSelectedTime(item)}
-              className={`flex items-center gap-2 px-6 py-2 w-max rounded-r-md cursor-pointer transition ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-md cursor-pointer transition ${
                 selectedTime?.time === item.time
                   ? "bg-primary text-white"
-                  : "hover:bg-primary/20"
+                  : "hover:bg-primary/10 text-gray-300"
               }`}
             >
               <ClockIcon className="w-4 h-4" />
-              <p className="text-sm">{isoTimeFormat(item.time)}</p>
+              <span className="text-sm">{isoTimeFormat(item.time)}</span>
             </div>
           ))}
         </div>
       </div>
-      {/* seat layout */}
-      <div className="relative flex-1 flex flex-col items-center max-md:mt-16">
-        <BlurCircle top="-100px" left="-100px" />
-        <BlurCircle bottom="0" right="0" />
-        <h1 className="text-2xl font-semibold mb-4">Select your seat</h1>
-        <img src={assets.screenImage} alt="screen" />
-        <p className="text-gray-400 text-sm mb-6">SCREEN SIDE</p>
-        <div className="flex flex-col items-center mt-10 text-xs text-gray-300">
-          <div className="grid grid-cols-2 md:grid-cols-1 gap-8 md:gap-2 mb-6">
+
+      {/* Right – Seat Layout */}
+      <div className="flex-1 flex flex-col items-center">
+        <h1 className="text-2xl font-semibold text-white mb-4">Select Your Seat</h1>
+
+        <img src={assets.screenImage} alt="screen" className="mb-1" />
+        <p className="text-sm text-gray-400 mb-8">SCREEN THIS SIDE</p>
+
+        {/* Rows */}
+        <div className="flex flex-col items-center text-xs text-white gap-8">
+          {/* First 2 rows grid */}
+          <div className="grid grid-cols-2 md:grid-cols-1 gap-4 md:gap-2">
             {groupRows[0].map((row) => renderSeats(row))}
           </div>
-          <div className="grid grid-cols-2 gap-11">
-            {groupRows.slice(1).map((group, idx) => (
-              <div key={idx}>{group.map((row) => renderSeats(row))}</div>
+
+          {/* Remaining rows in 2-column grid */}
+          <div className="grid grid-cols-2 gap-10 sm:gap-12 md:gap-14 lg:gap-20">
+            {groupRows.slice(1).map((group, index) => (
+              <div key={index} className="space-y-4">
+                {group.map((row) => renderSeats(row))}
+              </div>
             ))}
           </div>
         </div>
 
-        <button onClick={() => navigate('/my-bookings')} className="flex items-center gap-1 mt-20 px-10 py-3 text-sm bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer active:scale-95">
+        {/* Proceed Button */}
+        <button
+          onClick={() => navigate("/my-bookings")}
+          className="flex items-center gap-2 mt-16 px-10 py-3 text-sm bg-primary text-white hover:bg-primary-dull transition rounded-full font-medium active:scale-95 shadow-md"
+        >
           Proceed to Checkout
-          <ArrowRightIcon strokeWidth={3} className="w-4 h-4" />
+          <ArrowRightIcon className="w-4 h-4" strokeWidth={3} />
         </button>
       </div>
     </div>
