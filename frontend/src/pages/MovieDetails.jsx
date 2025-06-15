@@ -13,102 +13,120 @@ const MovieDetails = () => {
   const { id } = useParams();
   const [show, setShow] = useState(null);
 
-  const getShow = async () => {
-    const show = dummyShowsData.find((show) => show._id == id);
-    if (show) {
+  useEffect(() => {
+    const movie = dummyShowsData.find((s) => s._id === id);
+    if (movie) {
       setShow({
-        movie: show,
+        movie,
         dateTime: dummyDateTimeData,
       });
     }
-  };
-
-  useEffect(() => {
-    getShow();
   }, [id]);
 
-  return show ? (
-    <div className="px-6 md:px-16 lg:px-40 pt-30 md:pt-50">
-      <div className="flex flex-col md:flex-row gap-8 max-w-6xl mx-auto">
-        <img
-          src={show.movie.poster_path}
-          alt=""
-          className="max-md:mx-auto rounded-xl h-104 max-w-70 object-cover"
-        />
-        <div className="relative flex flex-col gap-3">
-          <BlurCircle top="-100px" left="-100px" />
-          <p className="text-primary">ENGLISH</p>
-          <h1 className="text-4xl font-semibold max-w-96 text-balance">
-            {show.movie.title}
-          </h1>
-          <div className="flex items-center gap-2 text-gray-300">
-            <StarIcon className="w-5 h-5 text-primary fill-primary" />
-            {show.movie.vote_average.toFixed(1)} User Ratings
+  if (!show) return <Loading />;
+
+  const { movie } = show;
+
+  return (
+    <div className="relative px-4 sm:px-8 md:px-16 lg:px-32 pt-24 pb-12 text-white">
+      <BlurCircle top="-100px" left="-100px" />
+
+      {/* Main Movie Section */}
+      <div className="flex flex-col lg:flex-row gap-10 max-w-6xl mx-auto bg-white/5 backdrop-blur-md rounded-2xl shadow-lg p-6 border border-white/10">
+        {/* Poster */}
+        <div className="w-full max-w-xs mx-auto lg:mx-0 relative group overflow-hidden rounded-xl shadow-lg">
+          <img
+            src={movie.poster_path}
+            alt={movie.title}
+            className="rounded-xl w-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent rounded-xl" />
+        </div>
+
+        {/* Movie Details */}
+        <div className="flex flex-col justify-between gap-4 text-white">
+          <p className="text-primary text-sm tracking-widest uppercase">English</p>
+          <h1 className="text-4xl font-bold leading-snug">{movie.title}</h1>
+          <div className="flex items-center gap-2 text-sm text-yellow-400">
+            <StarIcon className="w-5 h-5 fill-yellow-400" />
+            <span>{movie.vote_average.toFixed(1)} / 10</span>
           </div>
-          <p className="text-gray-400 mt-2 text-sm leading-tight max-w-xl">
-            {show.movie.overview}
+          <p className="text-gray-400 text-sm leading-relaxed">{movie.overview}</p>
+          <p className="text-sm text-gray-300">
+            {timeFormat(movie.runtime)} · {movie.genres.map((g) => g.name).join(", ")} ·{" "}
+            {movie.release_date.split("_")[0]}
           </p>
-          <p>
-            {timeFormat(show.movie.runtime)} .{" "}
-            {show.movie.genres.map((genre) => genre.name).join(" , ")} .{" "}
-            {show.movie.release_date.split("_")[0]}
-          </p>
-          <div className="flex items-center flex-wrap gap-4 mt-4">
-            <button className="flex items-center gap-2 px-7 py-3 text-sm bg-gray-800 hover:bg-gray-900 transition rounded-md font-medium cursor-pointer active:scale-95">
+
+          {/* Actions */}
+          <div className="flex flex-wrap gap-4 mt-4">
+            <button className="flex items-center gap-2 px-6 py-2 bg-gray-900/70 hover:bg-gray-800 text-white rounded-lg shadow transition active:scale-95 text-sm">
               <PlayCircle className="w-5 h-5" />
               Watch Trailer
             </button>
             <a
               href="#dateSelect"
-              className="px-10 py-3 text-sm bg-primary hover:bg-primary-dull transition rounded-md font-medium cursor-pointer active:scale-95"
+              className="px-6 py-2 bg-primary hover:bg-primary-dull transition text-white rounded-lg text-sm shadow active:scale-95"
             >
               Buy Tickets
             </a>
-            <button className="bg-gray-700 p-2.5 rounded-full transition cursor-pointer active:scale-95">
-              <Heart className={`w-5 h-5`} />
+            <button className="bg-gray-700 p-2.5 rounded-full hover:bg-gray-600 transition active:scale-95 shadow">
+              <Heart className="w-5 h-5" />
             </button>
           </div>
         </div>
       </div>
-      <p className="text-lg font-medium mt-20">Your Favorite Cast</p>
-      <div className="overflow-x-auto no-scrollbar mt-8 pb-4">
-        <div className="flex items-center gap-6 w-max px-4">
-          {show.movie.casts.slice(0, 12).map((cast, index) => (
-            <div key={index} className="flex flex-col items-center text-center">
-              <img
-                src={cast.profile_path}
-                alt=""
-                className="rounded-full h-20 md:h-20 aspect-square object-cover"
-              />
-              <p className="font-medium text-xs mt-3">{cast.name}</p>
-            </div>
+
+      {/* Cast Section */}
+      <div className="mt-20">
+        <h2 className="text-2xl font-semibold mb-4">Your Favorite Cast</h2>
+        <div className="overflow-x-auto no-scrollbar pb-2">
+          <div className="flex gap-6 w-max px-2">
+            {movie.casts.slice(0, 12).map((cast, index) => (
+              <div
+                key={index}
+                className="flex flex-col items-center text-center min-w-[80px] group"
+              >
+                <img
+                  src={cast.profile_path}
+                  alt={cast.name}
+                  className="rounded-full h-20 w-20 object-cover shadow-md group-hover:scale-105 transition"
+                />
+                <p className="text-xs text-white mt-2 group-hover:text-primary transition">
+                  {cast.name}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Date Select Section */}
+      <div id="dateSelect" className="mt-20">
+        <DateSelect dateTime={show.dateTime} id={id} />
+      </div>
+
+      {/* Recommendations */}
+      <div className="mt-20">
+        <p className="text-lg font-semibold mb-6">You May Also Like</p>
+        <div className="flex flex-wrap justify-center gap-6">
+          {dummyShowsData.slice(0, 4).map((movie, index) => (
+            <MovieCard key={index} movie={movie} />
           ))}
         </div>
       </div>
 
-      <DateSelect dateTime={show.dateTime} id={id} />
-
-      <p className="text-lg font-medium mt-20 mb-8">You May Also Like</p>
-      <div className="flex flex-wrap max-sm:justify-center gap-8">
-        {dummyShowsData.slice(0, 4).map((movie, index) => (
-          <MovieCard key={index} movie={movie} />
-        ))}
-      </div>
-      <div className="flex justify-center mt-20">
+      {/* Show More Button */}
+      <div className="flex justify-center mt-16">
         <button
           onClick={() => {
             navigate("/movies");
-            scrollTo(0, 0);
+            scrollTo({ top: 0, behavior: "smooth" });
           }}
-          className="px-10 py-3 text-sm bg-primary hover:bg-primary-dull transition rounded-md font-medium cursor-pointer"
+          className="px-8 py-3 bg-primary hover:bg-primary-dull transition text-white rounded-lg text-sm font-medium shadow-md active:scale-95"
         >
-          Show more
+          Show More
         </button>
       </div>
-    </div>
-  ) : (
-    <div>
-      <Loading />
     </div>
   );
 };
