@@ -8,25 +8,33 @@ const MOVIES_PER_PAGE = 6;
 const Movies = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOption, setSortOption] = useState('latest'); // latest, oldest, rating
+  const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState([]);
 
-  // Sort logic
-  const sortedMovies = useMemo(() => {
-    const movies = [...dummyShowsData];
-    if (sortOption === 'latest') {
-      return movies.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
-    }
-    if (sortOption === 'oldest') {
-      return movies.sort((a, b) => new Date(a.release_date) - new Date(b.release_date));
-    }
-    if (sortOption === 'rating') {
-      return movies.sort((a, b) => b.vote_average - a.vote_average);
-    }
-    return movies;
-  }, [sortOption]);
+  // Filtered + Sorted Movies
+  const filteredAndSortedMovies = useMemo(() => {
+    let movies = [...dummyShowsData];
 
-  const totalPages = Math.ceil(sortedMovies.length / MOVIES_PER_PAGE);
-  const currentMovies = sortedMovies.slice(
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      movies = movies.filter(movie =>
+        movie.title.toLowerCase().includes(query)
+      );
+    }
+
+    if (sortOption === 'latest') {
+      movies.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
+    } else if (sortOption === 'oldest') {
+      movies.sort((a, b) => new Date(a.release_date) - new Date(b.release_date));
+    } else if (sortOption === 'rating') {
+      movies.sort((a, b) => b.vote_average - a.vote_average);
+    }
+
+    return movies;
+  }, [sortOption, searchQuery]);
+
+  const totalPages = Math.ceil(filteredAndSortedMovies.length / MOVIES_PER_PAGE);
+  const currentMovies = filteredAndSortedMovies.slice(
     (currentPage - 1) * MOVIES_PER_PAGE,
     currentPage * MOVIES_PER_PAGE
   );
@@ -45,18 +53,33 @@ const Movies = () => {
       <BlurCircle top="150px" left="0px" />
       <BlurCircle bottom="50px" right="50px" />
 
-      {/* Header + Sort */}
+      {/* Header + Controls */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
         <h1 className="text-3xl md:text-4xl font-semibold text-white tracking-wide">Now Showing</h1>
-        <select
-          className="px-4 py-2 bg-gray-800 text-gray-200 rounded-md border border-gray-700"
-          value={sortOption}
-          onChange={(e) => setSortOption(e.target.value)}
-        >
-          <option value="latest">Sort by Latest</option>
-          <option value="oldest">Sort by Oldest</option>
-          <option value="rating">Sort by Rating</option>
-        </select>
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1); // Reset to page 1 when search changes
+            }}
+            placeholder="Search by title..."
+            className="px-4 py-2 bg-gray-800 text-white rounded-md border border-gray-700"
+          />
+          <select
+            className="px-4 py-2 bg-gray-800 text-gray-200 rounded-md border border-gray-700"
+            value={sortOption}
+            onChange={(e) => {
+              setSortOption(e.target.value);
+              setCurrentPage(1); // Reset to page 1 when sort changes
+            }}
+          >
+            <option value="latest">Sort by Latest</option>
+            <option value="oldest">Sort by Oldest</option>
+            <option value="rating">Sort by Rating</option>
+          </select>
+        </div>
       </div>
 
       {/* Movie Grid */}
@@ -96,7 +119,7 @@ const Movies = () => {
         </>
       ) : (
         <div className="text-center text-white mt-20">
-          <h2 className="text-xl font-bold">No movies available.</h2>
+          <h2 className="text-xl font-bold">No movies found.</h2>
         </div>
       )}
     </div>
