@@ -10,7 +10,7 @@ const MovieCard = ({ movie }) => {
 
   return (
     <div
-      className="backdrop-blur-md bg-white/10 border border-white/20 text-white rounded-2xl shadow-xl w-72 p-3 transition-transform transform hover:-translate-y-2 hover:shadow-2xl duration-300"
+      className="backdrop-blur-md bg-white/10 border border-white/20 text-white rounded-2xl shadow-xl w-72 p-3 transition hover:shadow-2xl duration-300"
     >
       <img
         onClick={() => {

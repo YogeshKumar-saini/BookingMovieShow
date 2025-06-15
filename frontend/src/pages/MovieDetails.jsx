@@ -1,41 +1,51 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { dummyDateTimeData, dummyShowsData } from '../assets/assets'
-import BlurCircle from '../components/BlurCircle'
+import { useAppContext } from '../context/AppContext'
 import { Heart, PlayCircleIcon, StarIcon } from 'lucide-react'
-import timeFormat from '../lib/timeFormat'
+import BlurCircle from '../components/BlurCircle'
 import DateSelect from '../components/DateSelect'
 import MovieCard from '../components/MovieCard'
 import Loading from '../components/Loading'
-import { useAppContext } from '../context/AppContext'
+import timeFormat from '../lib/timeFormat'
 import toast from 'react-hot-toast'
 
 const MovieDetails = () => {
-
   const navigate = useNavigate()
-  const {id} = useParams()
+  const { id } = useParams()
   const [show, setShow] = useState(null)
 
-  const {shows, axios, getToken, user, fetchFavoriteMovies, favoriteMovies, image_base_url} = useAppContext()
+  const {
+    shows,
+    axios,
+    getToken,
+    user,
+    fetchFavoriteMovies,
+    favoriteMovies,
+    image_base_url
+  } = useAppContext()
 
-  const getShow = async ()=>{
+  const getShow = async () => {
     try {
       const { data } = await axios.get(`/api/show/${id}`)
-      if(data.success){
-        setShow(data)
-      }
+      if (data.success) setShow(data)
     } catch (error) {
       console.log(error)
     }
   }
 
-  const handleFavorite = async ()=>{
+  const handleFavorite = async () => {
     try {
-      if(!user) return toast.error("Please login to proceed");
+      if (!user) return toast.error('Please login to proceed')
 
-      const { data } = await axios.post('/api/user/update-favorite', {movieId: id}, {headers: { Authorization: `Bearer ${await getToken()}` }})
+      const { data } = await axios.post(
+        '/api/user/update-favorite',
+        { movieId: id },
+        {
+          headers: { Authorization: `Bearer ${await getToken()}` }
+        }
+      )
 
-      if(data.success){
+      if (data.success) {
         await fetchFavoriteMovies()
         toast.success(data.message)
       }
@@ -43,71 +53,136 @@ const MovieDetails = () => {
       console.log(error)
     }
   }
-  
-  useEffect(()=>{
+
+  useEffect(() => {
     getShow()
-  },[id])
+  }, [id])
 
-  return show ? (
-    <div className='px-6 md:px-16 lg:px-40 pt-30 md:pt-50'>
-      <div className='flex flex-col md:flex-row gap-8 max-w-6xl mx-auto'>
+  if (!show) return <Loading />
 
-        <img src={image_base_url + show.movie.poster_path} alt="" className='max-md:mx-auto rounded-xl h-104 max-w-70 object-cover'/>
+  return (
+    <div className="text-white">
+      {/* Hero Section */}
+      <div
+        className="relative min-h-screen w-full bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url(${image_base_url + show.movie.backdrop_path})`
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-black/60 to-black z-0" />
 
-        <div className='relative flex flex-col gap-3'>
-          <BlurCircle top="-100px" left="-100px"/>
-          <p className='text-primary'>ENGLISH</p>
-          <h1 className='text-4xl font-semibold max-w-96 text-balance'>{show.movie.title}</h1>
-          <div className='flex items-center gap-2 text-gray-300'>
-            <StarIcon className="w-5 h-5 text-primary fill-primary"/>
-            {show.movie.vote_average.toFixed(1)} User Rating
+        <div className="relative z-10 px-4 sm:px-6 md:px-16 lg:px-36 py-20 flex flex-col md:flex-row gap-12 max-w-screen-xl mx-auto">
+          {/* Poster */}
+          <div className="w-full md:w-1/3">
+            <img
+              src={image_base_url + show.movie.poster_path}
+              alt={show.movie.title}
+              className="rounded-2xl shadow-2xl w-full max-w-xs sm:max-w-sm hover:scale-105 transition-transform duration-500"
+            />
           </div>
 
-          <p className='text-gray-400 mt-2 text-sm leading-tight max-w-xl'>{show.movie.overview}</p>
+          {/* Movie Info */}
+          <div className="w-full md:w-2/3 flex flex-col justify-center">
+            <p className="text-sm text-primary uppercase mb-1">Now Showing</p>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
+              {show.movie.title}
+            </h1>
 
-          <p>
-            {timeFormat(show.movie.runtime)} • {show.movie.genres.map(genre => genre.name).join(", ")} • {show.movie.release_date.split("-")[0]}
-          </p>
-
-          <div className='flex items-center flex-wrap gap-4 mt-4'>
-            <button className='flex items-center gap-2 px-7 py-3 text-sm bg-gray-800 hover:bg-gray-900 transition rounded-md font-medium cursor-pointer active:scale-95'>
-              <PlayCircleIcon className="w-5 h-5"/>
-              Watch Trailer
-              </button>
-            <a href="#dateSelect" className='px-10 py-3 text-sm bg-primary hover:bg-primary-dull transition rounded-md font-medium cursor-pointer active:scale-95'>Buy Tickets</a>
-            <button onClick={handleFavorite} className='bg-gray-700 p-2.5 rounded-full transition cursor-pointer active:scale-95'>
-              <Heart className={`w-5 h-5 ${favoriteMovies.find(movie => movie._id === id) ? 'fill-primary text-primary' : ""} `}/>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <p className='text-lg font-medium mt-20'>Your Favorite Cast</p>
-      <div className='overflow-x-auto no-scrollbar mt-8 pb-4'>
-        <div className='flex items-center gap-4 w-max px-4'>
-          {show.movie.casts.slice(0,12).map((cast,index)=> (
-            <div key={index} className='flex flex-col items-center text-center'>
-              <img src={image_base_url + cast.profile_path} alt="" className='rounded-full h-20 md:h-20 aspect-square object-cover'/>
-              <p className='font-medium text-xs mt-3'>{cast.name}</p>
+            <div className="flex items-center gap-2 text-gray-400 text-sm mb-3 flex-wrap">
+              <StarIcon className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+              {show.movie.vote_average.toFixed(1)} •{' '}
+              {timeFormat(show.movie.runtime)} •{' '}
+              {show.movie.release_date.split('-')[0]}
             </div>
-          ))}
+
+            <p className="text-sm sm:text-base text-gray-300 mb-6">
+              {show.movie.overview}
+            </p>
+
+            <div className="flex flex-wrap gap-2 mb-6">
+              {show.movie.genres.map((genre) => (
+                <span
+                  key={genre.id}
+                  className="bg-white/10 px-3 py-1 rounded-full text-xs text-gray-300"
+                >
+                  {genre.name}
+                </span>
+              ))}
+            </div>
+
+            {/* Buttons */}
+            <div className="flex items-center gap-4 flex-wrap">
+              <a
+                href="#dateSelect"
+                className="bg-primary px-4 sm:px-6 py-2 text-sm sm:text-base font-semibold rounded-full hover:bg-primary-dull transition shadow-md"
+              >
+                🎟 Buy Tickets
+              </a>
+              <button
+                onClick={handleFavorite}
+                className={`bg-white/10 hover:bg-white/20 backdrop-blur-md p-3 rounded-full transition ${
+                  favoriteMovies.find((movie) => movie._id === id)
+                    ? 'text-primary fill-primary'
+                    : 'text-gray-400'
+                }`}
+              >
+                <Heart className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <DateSelect dateTime={show.dateTime} id={id}/>
+      {/* Cast Section */}
+      <div className="px-4 sm:px-6 md:px-16 lg:px-36 mt-16">
+        <p className="text-xl sm:text-2xl font-semibold text-white">✨ Cast</p>
+        <div className="overflow-x-auto no-scrollbar mt-6 pb-4">
+          <div className="flex gap-4 sm:gap-6 w-max">
+            {show.movie.casts.slice(0, 12).map((cast, index) => (
+              <div key={index} className="text-center min-w-[72px] sm:min-w-[80px]">
+                <div className="relative group">
+                  <img
+                    src={image_base_url + cast.profile_path}
+                    className="h-16 w-16 sm:h-20 sm:w-20 rounded-full object-cover shadow-lg group-hover:shadow-xl transition"
+                    alt={cast.name}
+                  />
+                  <div className="absolute inset-0 rounded-full bg-white/10 blur-md opacity-0 group-hover:opacity-100 transition" />
+                </div>
+                <p className="text-xs sm:text-sm text-gray-300 mt-2">{cast.name}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
-      <p className='text-lg font-medium mt-20 mb-8'>You May Also Like</p>
-      <div className='flex flex-wrap max-sm:justify-center gap-8'>
-          {shows.slice(0,4).map((movie, index)=> (
-            <MovieCard key={index} movie={movie}/>
+      {/* Date Select */}
+      <div className="px-4 sm:px-6 md:px-16 lg:px-36 mt-16" id="dateSelect">
+        <DateSelect dateTime={show.dateTime} id={id} />
+      </div>
+
+      {/* Recommendations */}
+      <div className="px-4 sm:px-6 md:px-16 lg:px-36 mt-20">
+        <p className="text-lg sm:text-xl font-semibold mb-8">🎞 You May Also Like</p>
+        <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+          {shows.slice(0, 4).map((movie, index) => (
+            <MovieCard key={index} movie={movie} />
           ))}
-      </div>
-      <div className='flex justify-center mt-20'>
-          <button onClick={()=> {navigate('/movies'); scrollTo(0,0)}} className='px-10 py-3 text-sm bg-primary hover:bg-primary-dull transition rounded-md font-medium cursor-pointer'>Show more</button>
-      </div>
+        </div>
 
+        <div className="flex justify-center mt-10 mb-6">
+          <button
+            onClick={() => {
+              navigate('/movies')
+              scrollTo(0, 0)
+            }}
+            className="px-6 sm:px-10 py-2 rounded-full bg-primary hover:bg-primary-dull transition text-white font-medium"
+          >
+            Explore More
+          </button>
+        </div>
+      </div>
     </div>
-  ) : <Loading />
+  )
 }
 
 export default MovieDetails
