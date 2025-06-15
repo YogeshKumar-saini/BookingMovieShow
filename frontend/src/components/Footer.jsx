@@ -8,11 +8,7 @@ const Footer = () => {
   return (
     <footer
       className="relative text-gray-300 pt-20 pb-10 px-6 md:px-16 lg:px-36 overflow-hidden"
-      style={{
-        backgroundImage: `url('/backgroundImage.png')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
+   
     >
       {/* dark gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent backdrop-blur-sm z-0" />

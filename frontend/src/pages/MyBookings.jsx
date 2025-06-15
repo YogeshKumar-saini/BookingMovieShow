@@ -33,60 +33,57 @@ const MyBookings = () => {
   if (isLoading) return <Loading />
 
   return (
-    <div className='relative px-6 md:px-16 lg:px-36 pt-28 pb-20 min-h-screen text-white'>
-      <BlurCircle top="100px" left="100px" />
-      <BlurCircle bottom="0px" left="600px" />
-      
-      <h1 className='text-3xl font-bold mb-10'>🎟️ My Bookings</h1>
+    <div className='relative min-h-screen pt-28 pb-20 px-4 md:px-16 lg:px-36 bg-gradient-to-b from-black via-gray-900 to-black text-white'>
+      <BlurCircle top="120px" left="80px" />
+      <BlurCircle bottom="50px" right="100px" />
+
+      <h1 className='text-3xl md:text-4xl font-bold mb-12 text-center tracking-wide'>🎟️ My Bookings</h1>
 
       {bookings.length > 0 ? (
-        <div className='space-y-10 '>
+        <div className='grid gap-10 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2'>
           {bookings.map((item, index) => (
             <div
               key={index}
-              className='relative  bg-white/5 border border-white/10 rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 group'
+              className='relative group rounded-3xl bg-white/10 backdrop-blur-lg border border-white/10 shadow-xl overflow-hidden transition hover:scale-[1.01]'
             >
-              {/* Poster */}
-              <div className='w-full md:w-60 h-60 md:h-full absolute top-0 left-0'>
+              <div className='relative'>
                 <img
                   src={image_base_url + item.show.movie.poster_path}
                   alt={item.show.movie.title}
-                  className='w-full h-full object-cover object-top grayscale group-hover:grayscale-0 transition'
+                  className='w-full h-60 object-cover object-top grayscale group-hover:grayscale-0 transition-all duration-300'
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/90 to-transparent"></div>
+                <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent'></div>
               </div>
 
-              {/* Booking content */}
-              <div className='md:ml-60 p-6 flex flex-col md:flex-row md:justify-between gap-4'>
+              <div className='p-6 flex flex-col justify-between gap-4'>
+                {/* Movie Info */}
                 <div>
-                  <h2 className='text-2xl font-semibold mb-1'>{item.show.movie.title}</h2>
-                  <p className='flex items-center gap-2 text-sm text-gray-400'>
-                    <Clock className='w-4 h-4' /> {timeFormat(item.show.movie.runtime)}
-                  </p>
-                  <p className='flex items-center gap-2 text-sm text-gray-400 mt-1'>
-                    <CalendarDays className='w-4 h-4' /> {dateFormat(item.show.showDateTime)}
-                  </p>
-                  <p className='flex items-center gap-2 text-sm text-gray-400 mt-1'>
-                    <TicketIcon className='w-4 h-4' /> <span className='font-medium'>Seats:</span> {item.bookedSeats.join(', ')}
-                  </p>
+                  <h2 className='text-2xl font-bold text-white mb-1'>{item.show.movie.title}</h2>
+                  <div className='text-sm text-gray-300 space-y-1'>
+                    <p className='flex items-center gap-2'><Clock className='w-4 h-4' /> {timeFormat(item.show.movie.runtime)}</p>
+                    <p className='flex items-center gap-2'><CalendarDays className='w-4 h-4' /> {dateFormat(item.show.showDateTime)}</p>
+                    <p className='flex items-center gap-2'><TicketIcon className='w-4 h-4' /><span className='font-semibold'>Seats:</span> {item.bookedSeats.join(', ')}</p>
+                  </div>
                 </div>
 
-                {/* Right */}
-                <div className='text-right space-y-3'>
+                {/* Booking Info */}
+                <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
                   <p className='text-xl font-bold text-green-400'>{currency}{item.amount}</p>
-                  <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium 
-                    ${item.isPaid ? 'bg-green-600/20 text-green-400' : 'bg-red-600/20 text-red-400'}`}>
-                    {item.isPaid ? <CheckCircle className='w-4 h-4' /> : <XCircle className='w-4 h-4' />}
-                    {item.isPaid ? 'Paid' : 'Pending'}
-                  </span>
-                  {!item.isPaid && (
-                    <Link
-                      to={item.paymentLink}
-                      className='block bg-primary hover:bg-primary-dull transition px-4 py-2 text-sm rounded-full font-semibold'
-                    >
-                      Pay Now
-                    </Link>
-                  )}
+                  <div className='flex flex-col items-start sm:items-end gap-2'>
+                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium
+                      ${item.isPaid ? 'bg-green-600/20 text-green-400' : 'bg-red-600/20 text-red-400'}`}>
+                      {item.isPaid ? <CheckCircle className='w-4 h-4' /> : <XCircle className='w-4 h-4' />}
+                      {item.isPaid ? 'Paid' : 'Pending'}
+                    </span>
+                    {!item.isPaid && (
+                      <Link
+                        to={item.paymentLink}
+                        className='bg-primary hover:bg-primary-dull transition px-5 py-1.5 text-sm rounded-full font-medium text-white'
+                      >
+                        Pay Now
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

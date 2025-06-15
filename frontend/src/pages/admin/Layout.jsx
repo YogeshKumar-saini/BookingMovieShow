@@ -11,7 +11,7 @@ const Layout = () => {
 
   useEffect(()=>{
     fetchIsAdmin()
-  },[])
+  },[fetchIsAdmin])
 
   return isAdmin ? (
     <>

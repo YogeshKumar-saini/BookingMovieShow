@@ -5,30 +5,35 @@ import Title from '../../components/admin/Title';
 import { kConverter } from '../../lib/kConverter';
 import { useAppContext } from '../../context/AppContext';
 import toast from 'react-hot-toast';
-
+import  { useCallback } from 'react';
 const AddShows = () => {
   const { axios, getToken, user, image_base_url } = useAppContext();
-
   const currency = import.meta.env.VITE_CURRENCY;
+
   const [nowPlayingMovies, setNowPlayingMovies] = useState([]);
+  const [filteredMovies, setFilteredMovies] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [dateTimeSelection, setDateTimeSelection] = useState({});
   const [dateTimeInput, setDateTimeInput] = useState('');
   const [showPrice, setShowPrice] = useState('');
   const [addingShow, setAddingShow] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;
 
-  const fetchNowPlayingMovies = async () => {
+  const fetchNowPlayingMovies = useCallback(async () => {
     try {
       const { data } = await axios.get('/api/show/now-playing', {
         headers: { Authorization: `Bearer ${await getToken()}` },
       });
       if (data.success) {
         setNowPlayingMovies(data.movies);
+        setFilteredMovies(data.movies);
       }
-    } catch (error) {
-      console.error('Error fetching movies:', error);
+    } catch {
+      toast.error('Failed to fetch movies');
     }
-  };
+  }, [axios, getToken]);
 
   const handleDateTimeAdd = () => {
     if (!dateTimeInput) return;
@@ -42,35 +47,28 @@ const AddShows = () => {
       }
       return prev;
     });
+    setDateTimeInput('');
   };
 
   const handleRemoveTime = (date, time) => {
     setDateTimeSelection((prev) => {
-      const filteredTimes = prev[date].filter((t) => t !== time);
-      if (filteredTimes.length === 0) {
+      const updatedTimes = prev[date].filter((t) => t !== time);
+      if (updatedTimes.length === 0) {
         const { [date]: _, ...rest } = prev;
         return rest;
       }
-      return {
-        ...prev,
-        [date]: filteredTimes,
-      };
+      return { ...prev, [date]: updatedTimes };
     });
   };
 
   const handleSubmit = async () => {
-    console.log('Submitting show...'); // ✅ Trigger check
-    console.log('Selected Movie:', selectedMovie);
-    console.log('Date-Time Selection:', dateTimeSelection);
-    console.log('Show Price:', showPrice);
+    if (!selectedMovie || !showPrice || Object.keys(dateTimeSelection).length === 0) {
+      toast.error('Please fill all required fields');
+      return;
+    }
 
     try {
       setAddingShow(true);
-
-      if (!selectedMovie || Object.keys(dateTimeSelection).length === 0 || !showPrice) {
-        toast.error('Missing required fields');
-        return;
-      }
 
       const showsInput = Object.entries(dateTimeSelection).flatMap(([date, times]) =>
         times.map((time) => ({ date, time }))
@@ -86,143 +84,174 @@ const AddShows = () => {
         headers: { Authorization: `Bearer ${await getToken()}` },
       });
 
-      if (!data.success) {
-        toast.error(data.message || 'Failed to add show');
-        console.error('Error response:', data);
+      if (data.success) {
+        toast.success(data.message);
       } else {
-        toast.success(data.message || 'Show added successfully');
-      
+        toast.error(data.message || 'Failed to add show');
       }
-    } catch (error) {
-      console.error('Submission error:', error);
-      toast.error('An error occurred. Please try again.');
+    } catch {
+      toast.error('Something went wrong');
     } finally {
       setAddingShow(false);
     }
   };
 
   useEffect(() => {
-    if (user) {
-      fetchNowPlayingMovies();
-    }
-  }, [user]);
+    if (user) fetchNowPlayingMovies();
+  }, [user, fetchNowPlayingMovies]);
 
-  if (nowPlayingMovies.length === 0) return <Loading />;
+  useEffect(() => {
+    const results = nowPlayingMovies.filter((movie) =>
+      movie.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredMovies(results);
+    setCurrentPage(1);
+  }, [searchTerm, nowPlayingMovies]);
+
+  const paginatedMovies = filteredMovies.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredMovies.length / itemsPerPage);
+
+  if (!nowPlayingMovies.length) return <Loading />;
 
   return (
-    <>
+    <div className="relative px-4 md:px-10 lg:px-20">
       <Title text1="Add" text2="Shows" />
-      <p className="mt-10 text-lg font-medium">Now Playing Movies</p>
+      <p className="mt-8 text-lg font-semibold">🎬 Select a Movie</p>
+
+      <div className="mt-4 max-w-md">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search movies..."
+          className="w-full px-4 py-2 border border-gray-500 rounded-md bg-transparent text-sm"
+        />
+      </div>
 
       <div className="overflow-x-auto pb-4">
-        <div className="group flex flex-wrap gap-4 mt-4 w-max">
-          {nowPlayingMovies.map((movie) => (
+        <div className="flex flex-wrap gap-5 mt-4 w-max">
+          {paginatedMovies.map((movie) => (
             <div
               key={movie.id}
-              className={`relative max-w-40 cursor-pointer group-hover:not-hover:opacity-40 hover:-translate-y-1 transition duration-300`}
               onClick={() => setSelectedMovie(movie.id)}
+              className={`group relative w-40 cursor-pointer transition duration-300 hover:-translate-y-1 rounded-xl overflow-hidden border ${
+                selectedMovie === movie.id ? 'border-primary' : 'border-transparent'
+              }`}
             >
-              <div className="relative rounded-lg overflow-hidden">
-                <img
-                  src={image_base_url + movie.poster_path}
-                  alt=""
-                  className="w-full object-cover brightness-90"
-                />
-                <div className="text-sm flex items-center justify-between p-2 bg-black/70 w-full absolute bottom-0 left-0">
-                  <p className="flex items-center gap-1 text-gray-400">
-                    <StarIcon className="w-4 h-4 text-primary fill-primary" />
-                    {movie.vote_average.toFixed(1)}
-                  </p>
-                  <p className="text-gray-300">{kConverter(movie.vote_count)} Votes</p>
-                </div>
+              <img
+                src={image_base_url + movie.poster_path}
+                alt={movie.title}
+                className="w-full h-56 object-cover rounded-xl"
+              />
+              <div className="absolute bottom-0 left-0 w-full bg-black/70 p-2 text-xs text-gray-200 flex justify-between items-center">
+                <span className="flex gap-1 items-center">
+                  <StarIcon className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                  {movie.vote_average.toFixed(1)}
+                </span>
+                <span>{kConverter(movie.vote_count)} votes</span>
               </div>
               {selectedMovie === movie.id && (
-                <div className="absolute top-2 right-2 flex items-center justify-center bg-primary h-6 w-6 rounded">
-                  <CheckIcon className="w-4 h-4 text-white" strokeWidth={2.5} />
+                <div className="absolute top-2 right-2 bg-primary rounded-full p-1">
+                  <CheckIcon className="w-4 h-4 text-white" />
                 </div>
               )}
-              <p className="font-medium truncate">{movie.title}</p>
-              <p className="text-gray-400 text-sm">{movie.release_date}</p>
+              <div className="text-center mt-2">
+                <p className="font-medium truncate">{movie.title}</p>
+                <p className="text-xs text-gray-400">{movie.release_date}</p>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Show Price Input */}
-      <div className="mt-8">
-        <label className="block text-sm font-medium mb-2">Show Price</label>
-        <div className="inline-flex items-center gap-2 border border-gray-600 px-3 py-2 rounded-md">
-          <p className="text-gray-400 text-sm">{currency}</p>
+      {totalPages > 1 && (
+        <div className="mt-6 flex justify-center gap-2">
+          {[...Array(totalPages).keys()].map((i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentPage(i + 1)}
+              className={`px-3 py-1 rounded-md border text-sm transition ${
+                currentPage === i + 1 ? 'bg-primary text-white' : 'bg-transparent border-gray-500 text-gray-300'
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-10 max-w-sm">
+        <label className="block mb-1 font-medium"> Show Price</label>
+        <div className="flex items-center border border-gray-600 rounded-md px-3 py-2 gap-2">
+          <span className="text-gray-400">{currency}</span>
           <input
-            min={0}
             type="number"
+            min={0}
             value={showPrice}
             onChange={(e) => setShowPrice(e.target.value)}
-            placeholder="Enter show price"
-            className="outline-none"
+            className="bg-transparent outline-none flex-1"
+            placeholder="Enter price"
           />
         </div>
       </div>
 
-      {/* Date & Time Selection */}
-      <div className="mt-6">
-        <label className="block text-sm font-medium mb-2">Select Date and Time</label>
-        <div className="inline-flex gap-5 border border-gray-600 p-1 pl-3 rounded-lg">
+      <div className="mt-8">
+        <label className="block font-medium mb-2"> Date & Time</label>
+        <div className="flex gap-4 items-center">
           <input
             type="datetime-local"
             value={dateTimeInput}
             onChange={(e) => setDateTimeInput(e.target.value)}
-            className="outline-none rounded-md"
+            className="bg-transparent border border-gray-600 px-4 py-2 rounded-md text-sm"
           />
           <button
-            type="button"
             onClick={handleDateTimeAdd}
-            className="bg-primary/80 text-white px-3 py-2 text-sm rounded-lg hover:bg-primary cursor-pointer"
+            className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md text-sm transition"
           >
-            Add Time
+            Add
           </button>
         </div>
       </div>
 
-      {/* Display Selected Times */}
       {Object.keys(dateTimeSelection).length > 0 && (
         <div className="mt-6">
-          <h2 className="mb-2">Selected Date-Time</h2>
-          <ul className="space-y-3">
+          <h3 className="font-medium mb-2"> Selected Shows</h3>
+          <div className="space-y-4">
             {Object.entries(dateTimeSelection).map(([date, times]) => (
-              <li key={date}>
-                <div className="font-medium">{date}</div>
-                <div className="flex flex-wrap gap-2 mt-1 text-sm">
+              <div key={date}>
+                <p className="text-sm font-medium text-gray-300">{date}</p>
+                <div className="flex flex-wrap gap-2 mt-2">
                   {times.map((time) => (
                     <div
                       key={time}
-                      className="border border-primary px-2 py-1 flex items-center rounded"
+                      className="flex items-center border border-primary px-2 py-1 rounded-md text-sm bg-primary/10"
                     >
                       <span>{time}</span>
                       <DeleteIcon
+                        className="w-4 h-4 ml-2 cursor-pointer text-red-500 hover:text-red-700"
                         onClick={() => handleRemoveTime(date, time)}
-                        width={15}
-                        className="ml-2 text-red-500 hover:text-red-700 cursor-pointer"
                       />
                     </div>
                   ))}
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
 
-      {/* Submit Button */}
       <button
-        type="button"
         onClick={handleSubmit}
         disabled={addingShow}
-        className="bg-primary text-white px-8 py-2 mt-6 rounded hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-60"
+        className="mt-10 bg-gradient-to-r from-primary to-primary/80 hover:to-primary/90 text-white px-8 py-3 rounded-lg font-medium disabled:opacity-60 transition"
       >
         {addingShow ? 'Adding...' : 'Add Show'}
       </button>
-    </>
+    </div>
   );
 };
 
