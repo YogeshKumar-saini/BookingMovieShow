@@ -1,3 +1,19 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Testing
+coverage/
+
+# Production
+build/
+dist/
+
+# System Files
+.DS_Store
+Thumbs.db
+
 # Logs
 logs
 *.log
@@ -5,36 +21,34 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-# Build output
-dist/
-dist-ssr/   
-# Temporary files
-tmp/
-temp/
-# Coverage directory used by tools like istanbul
-coverage/
-# Dependency directories
-node_modules/   
-# Optional npm cache directory
-.npm/   
-# env files
-.env/
-.env.local/
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
+# Vite or CRA cache
+.cache/
+.vite/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
+# Editor/IDE
+.idea/
+.vscode/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+
+# OS-specific
+*.swp
+*.bak
+*.tmp
+*.orig
+
+# Environment files
+.env
+.env.*.local
+
+# Optional: Ignore build stats
+stats.json
