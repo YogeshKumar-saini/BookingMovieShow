@@ -136,3 +136,4 @@ const SeatLayout = () => {
 };
 
 export default SeatLayout;
+
