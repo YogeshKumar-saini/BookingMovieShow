@@ -52,3 +52,4 @@ pids
 
 # Optional: Ignore build stats
 stats.json
+*env

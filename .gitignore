@@ -48,6 +48,8 @@ pids
 
 # Environment files
 .env
+*env
+
 .env.*.local
 
 # Optional: Ignore build stats
